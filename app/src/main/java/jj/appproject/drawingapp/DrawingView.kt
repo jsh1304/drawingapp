@@ -3,6 +3,7 @@ package jj.appproject.drawingapp
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 
 class DrawingView(context: Context, attrs:AttributeSet) : View(context,attrs){
@@ -44,6 +45,66 @@ class DrawingView(context: Context, attrs:AttributeSet) : View(context,attrs){
     }
 
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        mCanvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        canvas = Canvas(mCanvasBitmap!!)
+    }
+
+    // 오류시 Canvas -> Canvas?
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+
+        mCanvasBitmap?.let {
+            canvas.drawBitmap(it, 0f, 0f, mCanvasPaint)
+        }
+
+        if(!mDrawPath!!.isEmpty){
+            mDrawPaint!!.strokeWidth = mDrawPath!!.brushThickness
+            mDrawPaint!!.color = mDrawPath!!.color  // nullable이면 !! 붙이기
+            canvas.drawPath(mDrawPath!!, mDrawPaint!!)
+        }
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        val touchX = event?.x
+        val touchY = event?.y
+
+        when(event?.action){
+            MotionEvent.ACTION_DOWN -> {
+                mDrawPath!!.color = color
+                mDrawPath!!.brushThickness = mBrushSize
+
+                mDrawPath!!.reset()
+                if (touchX != null) {
+                    if (touchY != null) {
+                        mDrawPath!!.moveTo(
+                            touchX,
+                            touchY
+                        )
+                    }
+                }
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (touchX != null) {
+                    if (touchY != null) {
+                        mDrawPath!!.lineTo(touchX, touchY)
+                    }
+                }
+            }
+            MotionEvent.ACTION_UP -> {
+                mPaths.add(mDrawPath!!)
+
+                mDrawPath = CustomPath(color, mBrushSize)
+            }
+
+            else -> return false
+        }
+
+        invalidate()
+
+        return true
+    }
 
 
     internal inner class CustomPath(var color: Int,
