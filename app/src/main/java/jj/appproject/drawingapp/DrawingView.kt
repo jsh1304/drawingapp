@@ -86,11 +86,7 @@ class DrawingView(context: Context, attrs:AttributeSet) : View(context,attrs){
                 }
             }
             MotionEvent.ACTION_MOVE -> {
-                if (touchX != null) {
-                    if (touchY != null) {
-                        mDrawPath!!.lineTo(touchX, touchY)
-                    }
-                }
+                 mDrawPath!!.lineTo(touchX!!, touchY!!)
             }
             MotionEvent.ACTION_UP -> {
                 mPaths.add(mDrawPath!!)
