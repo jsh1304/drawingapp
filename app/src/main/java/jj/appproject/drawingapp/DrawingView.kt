@@ -31,6 +31,20 @@ class DrawingView(context: Context, attrs:AttributeSet) : View(context,attrs){
         setUpDrawing()
     }
 
+    fun onClickUndo(){ // 뒤돌리기
+        if(mPaths.size > 0){
+            mUndoPaths.add(mPaths.removeAt(mPaths.size-1)) // mPaths에서 삭제하는 path를 추가
+            invalidate()
+        }
+    }
+
+    fun onClickRedo(){   // 앞돌리기
+        if(mUndoPaths.size > 0){
+            mPaths.add(mUndoPaths.removeAt(mUndoPaths.size-1))
+            invalidate()
+        }
+    }
+
     private fun setUpDrawing(){
         mDrawPaint = Paint()
         mDrawPath = CustomPath(color, mBrushSize)

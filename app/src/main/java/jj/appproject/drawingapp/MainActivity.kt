@@ -4,10 +4,13 @@ import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.View
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -23,7 +26,18 @@ class MainActivity : AppCompatActivity() {
 
     private var mImageButtonCurrentPaint: ImageButton? = null
 
-    val requestPermission: ActivityResultLauncher<Array<String>> =
+    val openGalleryLauncher: ActivityResultLauncher<Intent> = // 이미지 선택 위한 변수
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ // StartActivityForResult 요청 -> result를 가져온다.
+            result ->
+            if(result.resultCode == RESULT_OK && result.data != null){ // [조건 1] resultCode = result의 종류, [조건 2] result 데이터가 비어있는지 여부
+                val imageBackGround: ImageView = findViewById(R.id.iv_background)
+
+                imageBackGround.setImageURI(result.data?.data) // .setImage = drawable, bitmap, resource 등을 설정 가능
+                // result.data?(데이터 위치).data(값)
+            }
+        }
+
+    val requestPermission: ActivityResultLauncher<Array<String>> = // ActivityResultLauncher 사용시 어떤 종류의 launch인지 정의
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
             permissions ->
             permissions.entries.forEach{
@@ -35,6 +49,10 @@ class MainActivity : AppCompatActivity() {
                         "접근이 승인되어 저장 파일을 불러올 수 있습니다.",
                         Toast.LENGTH_LONG
                     ).show()
+
+                    val pickIntent = Intent(Intent.ACTION_PICK,
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI)  // EXTERNAL_CONTENT_URI == 기기 안의 위치 <-- intent에서 가져옴.
+                    openGalleryLauncher.launch(pickIntent)
                 }
                 else{
                     if(permissionName==Manifest.permission.READ_EXTERNAL_STORAGE){
@@ -64,6 +82,16 @@ class MainActivity : AppCompatActivity() {
         val ib_brush : ImageButton = findViewById(R.id.ib_brush)
         ib_brush.setOnClickListener{
             showBrushSizeChooserDialog()
+        }
+
+        val ibUndo : ImageButton = findViewById(R.id.ib_undo)
+        ibUndo.setOnClickListener{
+            drawingView?.onClickUndo()
+        }
+
+        val ibRedo : ImageButton = findViewById(R.id.ib_redo)
+        ibRedo.setOnClickListener{
+            drawingView?.onClickRedo()
         }
 
         val ibGallery : ImageButton = findViewById(R.id.ib_gallery)
