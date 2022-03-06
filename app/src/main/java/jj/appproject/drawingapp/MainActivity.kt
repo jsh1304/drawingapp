@@ -5,6 +5,9 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
@@ -110,8 +113,8 @@ class MainActivity : AppCompatActivity() {
         }
         else{
             requestPermission.launch(arrayOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            // TODO 외부 저장소 데이터 출력 추가할 것
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
             ))
         }
     }
@@ -180,6 +183,33 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
         builder.create().show()
+    }
+
+    private fun getBitmapFromView(view: View): Bitmap{
+
+        // 뷰 크기로 비트 맵 정의
+        // CreateBitmap : mutable bitmap을 특정 폭 높이와 함께 반환
+        val returnedBitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+
+        // 캔버스에 바인딩
+        val canvas = Canvas(returnedBitmap)
+
+        // 뷰의 background를 get
+        val bgDrawable = view.background
+        if(bgDrawable != null){
+            // background drawable 존재 -> 캔버스에 그림 그린다.
+            bgDrawable.draw(canvas)
+        }
+        else{
+            // background drawable 존재x -> 캔버스를 하얀 background로 구성
+            canvas.drawColor(Color.WHITE)
+        }
+
+        // canvas에 view를 그림
+        view.draw(canvas)
+
+        return returnedBitmap
+
     }
 
 
