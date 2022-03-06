@@ -209,7 +209,7 @@ class MainActivity : AppCompatActivity() {
         view.draw(canvas)
 
         return returnedBitmap
-
+ 
     }
 
 
