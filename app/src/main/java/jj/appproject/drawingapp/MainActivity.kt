@@ -243,7 +243,7 @@ class MainActivity : AppCompatActivity() {
         view.draw(canvas)
 
         return returnedBitmap
-
+ 
     }
 
     private suspend fun saveBitmapFile(mBitmap: Bitmap?): String{
