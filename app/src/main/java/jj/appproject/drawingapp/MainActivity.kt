@@ -5,22 +5,29 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.Settings
 import android.view.View
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.get
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,17 +37,22 @@ class MainActivity : AppCompatActivity() {
     private var mImageButtonCurrentPaint: ImageButton? = null
 
     val openGalleryLauncher: ActivityResultLauncher<Intent> = // 이미지 선택 위한 변수
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ // StartActivityForResult 요청 -> result를 가져온다.
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+            // StartActivityForResult 요청 -> result를 가져온다.
             result ->
-            if(result.resultCode == RESULT_OK && result.data != null){ // [조건 1] resultCode = result의 종류, [조건 2] result 데이터가 비어있는지 여부
+            if(result.resultCode == RESULT_OK && result.data != null){
+                // [조건 1] resultCode = result의 종류, [조건 2] result 데이터가 비어있는지 여부
                 val imageBackGround: ImageView = findViewById(R.id.iv_background)
 
-                imageBackGround.setImageURI(result.data?.data) // .setImage = drawable, bitmap, resource 등을 설정 가능
+                imageBackGround.setImageURI(result.data?.data)
+            // .setImage = drawable, bitmap, resource 등을 설정 가능
                 // result.data?(데이터 위치).data(값)
             }
         }
 
-    val requestPermission: ActivityResultLauncher<Array<String>> = // ActivityResultLauncher 사용시 어떤 종류의 launch인지 정의
+    // ActivityResultLauncher 사용시 어떤 종류의 launch인지 정의
+    val requestPermission: ActivityResultLauncher<Array<String>> =
+
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
             permissions ->
             permissions.entries.forEach{
@@ -54,7 +66,8 @@ class MainActivity : AppCompatActivity() {
                     ).show()
 
                     val pickIntent = Intent(Intent.ACTION_PICK,
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI)  // EXTERNAL_CONTENT_URI == 기기 안의 위치 <-- intent에서 가져옴.
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                    // EXTERNAL_CONTENT_URI == 기기 안의 위치 <-- intent에서 가져옴.
                     openGalleryLauncher.launch(pickIntent)
                 }
                 else{
@@ -97,10 +110,31 @@ class MainActivity : AppCompatActivity() {
             drawingView?.onClickRedo()
         }
 
+        val ibSave : ImageButton = findViewById(R.id.ib_save)
+        ibSave.setOnClickListener {
+
+            if(isReadStorageAllowed()){
+                lifecycleScope.launch {
+                    val flDrawingView: FrameLayout = findViewById(R.id.fl_drawing_view_container)
+                    //val myBitmap: Bitmap = getBitmapFromView(flDrawingView)
+                    saveBitmapFile(getBitmapFromView(flDrawingView))
+                }
+            }
+
+        }
+
         val ibGallery : ImageButton = findViewById(R.id.ib_gallery)
         ibGallery.setOnClickListener{
             requestStoragePermission()
         }
+    }
+
+    private fun isReadStorageAllowed(): Boolean{
+        val result = ContextCompat.checkSelfPermission(this,
+        Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+        // return 통해 0이 돌아온다 == 외부 스토리지 리딩 권한이 있다
+        return result == PackageManager.PERMISSION_GRANTED
     }
 
     private fun requestStoragePermission() {
@@ -210,6 +244,44 @@ class MainActivity : AppCompatActivity() {
 
         return returnedBitmap
 
+    }
+
+    private suspend fun saveBitmapFile(mBitmap: Bitmap?): String{
+        var result = ""
+        withContext(Dispatchers.IO){
+            if(mBitmap != null){
+                try {
+                    val bytes = ByteArrayOutputStream() //새로운 byte array output stream 생성하는 이미지 출력
+                    mBitmap.compress(Bitmap.CompressFormat.PNG, 90, bytes)
+                    
+                    // f == 파일의 위치
+                    val f = File(externalCacheDir?.absoluteFile.toString()
+                            + File.separator + "DrawingApp_" + System.currentTimeMillis() / 1000 + ".png")
+                                // System.currentTimeMillis() == 각 이미지에 고유한 이름을 부여
+
+                    val fo = FileOutputStream(f)
+                    fo.write(bytes.toByteArray())
+                    fo.close()
+
+                    result = f.absolutePath
+
+                    runOnUiThread {
+                        if(result.isNotEmpty()){
+                            Toast.makeText(
+                                this@MainActivity,
+                                "File saved successfully :$result",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+                catch (e: Exception){ // catch는 오류라는 예외
+                    result = "" // 예외 발생시 result를 비워버림
+                    e.printStackTrace() // 어디 오류가 났는지 print하기 위해
+                }
+            }
+        }
+        return result
     }
 
 

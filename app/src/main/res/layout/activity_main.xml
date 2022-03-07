@@ -22,7 +22,6 @@
         android:id="@+id/iv_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:contentDescription="image"
         android:src="@drawable/kor_landmark"
         android:scaleType="centerCrop" />
 
