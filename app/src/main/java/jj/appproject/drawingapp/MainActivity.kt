@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.READ_EXTERNAL_STORAGE
         )){
             showRationaleDialog("Drawing App", "그림그림 앱은" +
-                    "당신의 갤러리에 대한 접근을 승인해야합니다.")
+                    "당신의 갤러리에 대한 접근을 승인해야합니다.") 
         }
         else{
             requestPermission.launch(arrayOf(
@@ -254,7 +254,7 @@ class MainActivity : AppCompatActivity() {
         withContext(Dispatchers.IO){
             if(mBitmap != null){
                 try {
-                    val bytes = ByteArrayOutputStream() //새로운 byte array output stream 생성하는 이미지 출력
+                    val bytes = ByteArrayOutputStream() //새로운 byte array output stream 생성하는 이미지 출력 
                     mBitmap.compress(Bitmap.CompressFormat.PNG, 90, bytes)
                     
                     // f == 파일의 위치
